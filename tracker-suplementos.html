@@ -214,12 +214,28 @@ async function guardarDia() {
 let _histData = null;
 let _histLoaded = false;
 
+function fetchJSONP(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now();
+    const script = document.createElement('script');
+    script.src = url + '&callback=' + cbName;
+    window[cbName] = (data) => {
+      document.head.removeChild(script);
+      delete window[cbName];
+      resolve(data);
+    };
+    script.onerror = () => { document.head.removeChild(script); delete window[cbName]; reject(new Error('JSONP error')); };
+    setTimeout(() => { if(window[cbName]){ delete window[cbName]; reject(new Error('timeout')); } }, 12000);
+    document.head.appendChild(script);
+  });
+}
+
 async function cargarHistorial() {
-  if(_histLoaded) { renderHistorial(); renderAdherencia(); return; }
-  const url = SHEET_URL + '?action=get';
+  document.getElementById('tabla-historial').innerHTML='<p class="msg">⏳ Cargando…</p>';
+  document.getElementById('lista-adherencia').innerHTML='<p class="msg">⏳ Cargando…</p>';
+  _histLoaded = false;
   try {
-    const r = await fetch(url, {redirect:'follow'});
-    const data = await r.json(); // [[headers],[row1],[row2],...]
+    const data = await fetchJSONP(SHEET_URL + '?action=get');
     _histData = data;
     _histLoaded = true;
     renderHistorial();
