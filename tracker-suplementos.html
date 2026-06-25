@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💊 Tracker Suplementos</title>
+<style>
+  :root{--verde:#2D6A4F;--verde-claro:#e8f5e9;--morado:#7B5EA7;--naranja:#E67E22;--azul:#2471A3;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f7f5;color:#1B4332;min-height:100vh;}
+  header{background:var(--verde);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;}
+  header h1{font-size:1.05rem;font-weight:700;}
+  .fecha-hoy{font-size:.78rem;opacity:.8;margin-left:auto;}
+  main{padding:16px;max-width:500px;margin:0 auto;}
+  .slot{margin-bottom:14px;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .slot-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;color:#fff;font-weight:700;font-size:.9rem;}
+  .slot-hdr.ayunas{background:var(--morado);}
+  .slot-hdr.desayuno{background:var(--naranja);}
+  .slot-hdr.comida{background:var(--verde);}
+  .slot-hdr.noche{background:var(--azul);}
+  .slot-time{margin-left:auto;font-size:.75rem;opacity:.85;font-weight:400;}
+  .slot-body{background:#fff;padding:4px 12px 8px;}
+  .item{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid #f0f7f4;}
+  .item:last-child{border-bottom:none;}
+  .item input[type=checkbox]{width:22px;height:22px;min-width:22px;accent-color:var(--verde);cursor:pointer;}
+  .item label{flex:1;cursor:pointer;}
+  .item label strong{display:block;font-size:.88rem;}
+  .item label em{font-style:normal;font-size:.75rem;color:var(--verde);font-weight:600;}
+  .item.checked{opacity:.45;}
+  .item.checked label strong{text-decoration:line-through;}
+  .barra-wrap{background:#fff;padding:10px 16px 6px;display:flex;align-items:center;gap:10px;}
+  .barra{flex:1;height:8px;background:#e0f0e8;border-radius:4px;overflow:hidden;}
+  .barra-fill{height:100%;background:var(--verde);border-radius:4px;transition:width .3s;}
+  .barra-txt{font-size:.78rem;font-weight:700;color:var(--verde);}
+  .btns{display:flex;gap:10px;margin:16px 0 8px;flex-wrap:wrap;}
+  .btn-guardar{flex:1;padding:13px;background:var(--verde);color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer;}
+  .btn-reset{padding:13px 16px;background:transparent;border:1.5px solid var(--verde);color:var(--verde);border-radius:12px;font-size:.9rem;font-weight:600;cursor:pointer;}
+  .save-msg{text-align:center;font-size:.82rem;font-weight:600;color:var(--verde);min-height:20px;margin-bottom:8px;}
+
+  /* Historial */
+  .tabs{display:flex;gap:8px;margin:20px 0 12px;}
+  .tab{padding:7px 18px;border:none;border-radius:20px;background:var(--verde-claro);color:var(--verde);font-size:.85rem;font-weight:600;cursor:pointer;}
+  .tab.active{background:var(--verde);color:#fff;}
+  .panel{display:none;} .panel.active{display:block;}
+  .reg-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.76rem;}
+  th{background:var(--verde);color:#fff;padding:6px 4px;text-align:center;white-space:nowrap;line-height:1.3;}
+  th.nombre-col{text-align:left;padding-left:8px;}
+  td{padding:6px 4px;text-align:center;border-bottom:1px solid #f0f7f4;}
+  td.nombre-col{text-align:left;font-size:.78rem;font-weight:600;padding-left:8px;white-space:normal;line-height:1.3;}
+  tr:last-child td{border-bottom:none;}
+  .adh-item{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid #f0f7f4;}
+  .adh-item:last-child{border-bottom:none;}
+  .adh-dot{width:9px;height:9px;min-width:9px;border-radius:50%;}
+  .adh-name{flex:1;font-size:.82rem;}
+  .adh-bar-wrap{width:110px;min-width:70px;height:9px;background:#e8f5e9;border-radius:5px;overflow:hidden;}
+  .adh-bar-fill{height:100%;border-radius:5px;}
+  .adh-pct{font-size:.82rem;font-weight:700;width:36px;text-align:right;}
+  .btn-actualizar{padding:6px 14px;background:var(--verde-claro);border:none;border-radius:20px;color:var(--verde);font-size:.78rem;font-weight:600;cursor:pointer;margin-bottom:10px;}
+  .msg{padding:16px;text-align:center;color:#888;font-size:.85rem;}
+</style>
+</head>
+<body>
+
+<header>
+  <span style="font-size:1.4rem">💊</span>
+  <h1>Suplementos</h1>
+  <span class="fecha-hoy" id="fecha-hoy"></span>
+</header>
+
+<main>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('tracker',this)">🗓️ Hoy</button>
+    <button class="tab" onclick="switchTab('historial',this);cargarHistorial()">📅 Historial</button>
+    <button class="tab" onclick="switchTab('adherencia',this);cargarHistorial()">📊 Adherencia</button>
+  </div>
+
+  <!-- TRACKER -->
+  <div class="panel active" id="panel-tracker">
+    <div id="slots-container"></div>
+    <div class="btns">
+      <button class="btn-reset" onclick="resetDia()">↺ Reiniciar</button>
+      <button class="btn-guardar" onclick="guardarDia()" id="btn-guardar">💾 Guardar día</button>
+    </div>
+    <div class="save-msg" id="save-msg"></div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div class="panel" id="panel-historial">
+    <button class="btn-actualizar" onclick="cargarHistorial()">↻ Actualizar</button>
+    <div class="reg-wrap"><div id="tabla-historial"><p class="msg">Cargando…</p></div></div>
+  </div>
+
+  <!-- ADHERENCIA -->
+  <div class="panel" id="panel-adherencia">
+    <button class="btn-actualizar" onclick="cargarHistorial()">↻ Actualizar</button>
+    <div id="lista-adherencia"><p class="msg">Cargando…</p></div>
+  </div>
+</main>
+
+<script>
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxu82vVLdh_P7JQq2AtQQ1PPyCGNTKwxerP5lI1CAWh6z57jkKq1RQnrYwVgu7i_7Kpyw/exec';
+
+const SLOTS = [
+  {id:'ayunas',   label:'Al despertar', icon:'🌅', time:'06:00–07:00'},
+  {id:'desayuno', label:'Desayuno',     icon:'☀️', time:'07:00–08:00'},
+  {id:'comida',   label:'Comida',       icon:'🌞', time:'13:00–14:00'},
+  {id:'noche',    label:'Noche',        icon:'🌙', time:'21:00–22:00'},
+];
+
+const SUPS = [
+  {id:'levotiroxina',  nombre:'Eutirox 50 mcg',          dosis:'50 mcg',  slot:'ayunas'},
+  {id:'paroxetina',    nombre:'Paroxetina 20 mg',         dosis:'20 mg',   slot:'desayuno'},
+  {id:'modafinilo',    nombre:'Modafinilo 100 mg',        dosis:'100 mg',  slot:'desayuno'},
+  {id:'omega3',        nombre:'Omega 3',                  dosis:'1 cáp',   slot:'desayuno'},
+  {id:'vitd3',         nombre:'Vitamina D3',              dosis:'1 cáp',   slot:'desayuno'},
+  {id:'vitk2',         nombre:'Vitamina K2 MK-7',         dosis:'1 cáp',   slot:'desayuno'},
+  {id:'selenio',       nombre:'Selenio + Vit E',          dosis:'1 cáp',   slot:'desayuno'},
+  {id:'inositol',      nombre:'Myo-Inositol (½ dosis)',   dosis:'2 g',     slot:'desayuno'},
+  {id:'zinc',          nombre:'Picolinato de Zinc',       dosis:'1 cáp',   slot:'comida'},
+  {id:'glutamina',     nombre:'L-Glutamina',              dosis:'5 g',     slot:'comida'},
+  {id:'akkermansia',   nombre:'Akkermansia + Resveratrol',dosis:'1 cáp',   slot:'comida'},
+  {id:'vitc',          nombre:'Vitamina C',               dosis:'1 g',     slot:'comida'},
+  {id:'lifeed',        nombre:'LIFEED (Keratina)',        dosis:'1 cáp',   slot:'comida'},
+  {id:'ferrotemp',     nombre:'Ferrotemp 330 mg',         dosis:'1 cáp',   slot:'comida'},
+  {id:'inositol_n',    nombre:'Myo-Inositol (½ noche)',   dosis:'2 g',     slot:'noche'},
+  {id:'probioticos',   nombre:'Probióticos',              dosis:'1 cáp',   slot:'noche'},
+  {id:'magnesio',      nombre:'Glicinato de Magnesio',   dosis:'2 cáp',   slot:'noche'},
+  {id:'melatonina',    nombre:'Melatonina',               dosis:'1 cáp',   slot:'noche'},
+];
+
+const SLOT_COLORS = {ayunas:'#7B5EA7',desayuno:'#E67E22',comida:'#2D6A4F',noche:'#2471A3'};
+const state = {};
+SUPS.forEach(s => state[s.id] = false);
+
+// ── Fecha ──────────────────────────────────────────────
+const hoy = new Date();
+document.getElementById('fecha-hoy').textContent =
+  hoy.toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
+
+// ── Render tracker ─────────────────────────────────────
+function renderTracker() {
+  const container = document.getElementById('slots-container');
+  let html = '';
+  SLOTS.forEach(slot => {
+    const items = SUPS.filter(s => s.slot === slot.id);
+    const done = items.filter(s => state[s.id]).length;
+    const pct = items.length ? Math.round(done/items.length*100) : 0;
+    html += `<div class="slot">
+      <div class="slot-hdr ${slot.id}">${slot.icon} ${slot.label}<span class="slot-time">${slot.time}</span></div>
+      <div class="barra-wrap">
+        <div class="barra"><div class="barra-fill" style="width:${pct}%"></div></div>
+        <span class="barra-txt">${done}/${items.length}</span>
+      </div>
+      <div class="slot-body">`;
+    items.forEach(s => {
+      const chk = state[s.id] ? 'checked' : '';
+      const cls = state[s.id] ? 'checked' : '';
+      html += `<div class="item ${cls}" id="item-${s.id}">
+        <input type="checkbox" id="cb-${s.id}" ${chk} onchange="toggle('${s.id}',this)">
+        <label for="cb-${s.id}"><strong>${s.nombre}</strong><em>${s.dosis}</em></label>
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+  container.innerHTML = html;
+}
+
+function toggle(id, cb) {
+  state[id] = cb.checked;
+  const item = document.getElementById('item-'+id);
+  if(item) item.className = 'item' + (cb.checked?' checked':'');
+  // update barra
+  renderTracker(); // simple re-render
+}
+
+function resetDia() {
+  SUPS.forEach(s => state[s.id] = false);
+  renderTracker();
+}
+
+// ── Guardar ────────────────────────────────────────────
+async function guardarDia() {
+  const btn = document.getElementById('btn-guardar');
+  const msg = document.getElementById('save-msg');
+  const fecha = hoy.toLocaleDateString('es-MX',{year:'numeric',month:'2-digit',day:'2-digit'})
+              + ' ' + hoy.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  const vals = SUPS.map(s => state[s.id]?'1':'0').join(',');
+  const nombres = encodeURIComponent(SUPS.map(s=>s.nombre).join('|'));
+  const url = `${SHEET_URL}?action=save&fecha=${encodeURIComponent(fecha)}&vals=${vals}&nombres=${nombres}`;
+  btn.textContent='⏳ Guardando…'; btn.disabled=true;
+  try {
+    const r = await fetch(url, {redirect:'follow'});
+    const data = await r.json();
+    if(data.status==='ok'){
+      btn.textContent='✅ Guardado'; msg.textContent='Registrado: '+fecha;
+    } else {
+      btn.textContent='❌ Error'; btn.disabled=false;
+    }
+  } catch(e) {
+    // Apps Script redirect — try no-cors fallback
+    try {
+      await fetch(url, {mode:'no-cors',redirect:'follow'});
+      btn.textContent='✅ Guardado'; msg.textContent='Registrado: '+fecha;
+    } catch(e2){
+      btn.textContent='❌ Error'; btn.disabled=false;
+    }
+  }
+  setTimeout(()=>{btn.textContent='💾 Guardar día';btn.disabled=false;},4000);
+}
+
+// ── Historial & Adherencia ─────────────────────────────
+let _histData = null;
+let _histLoaded = false;
+
+async function cargarHistorial() {
+  if(_histLoaded) { renderHistorial(); renderAdherencia(); return; }
+  const url = SHEET_URL + '?action=get';
+  try {
+    const r = await fetch(url, {redirect:'follow'});
+    const data = await r.json(); // [[headers],[row1],[row2],...]
+    _histData = data;
+    _histLoaded = true;
+    renderHistorial();
+    renderAdherencia();
+  } catch(e) {
+    document.getElementById('tabla-historial').innerHTML='<p class="msg">❌ Error al cargar.</p>';
+    document.getElementById('lista-adherencia').innerHTML='<p class="msg">❌ Error al cargar.</p>';
+  }
+}
+
+function renderHistorial() {
+  const el = document.getElementById('tabla-historial');
+  if(!_histData||_histData.length<2){el.innerHTML='<p class="msg">Sin registros aún.</p>';return;}
+  const headers = _histData[0]; // ['Fecha', sup1, sup2, ...]
+  const rows = _histData.slice(1).reverse();
+  let t = '<table><thead><tr><th class="nombre-col">Suplemento</th>';
+  rows.forEach(r => {
+    const parts = (r[0]||'').split(' ');
+    t += `<th><span style="display:block;font-size:.6rem">${parts[0]||''}</span><span style="display:block;font-size:.56rem;opacity:.75">${parts[1]||''}</span></th>`;
+  });
+  t += '</tr></thead><tbody>';
+  headers.slice(1).forEach((nombre, i) => {
+    t += `<tr><td class="nombre-col">${nombre}</td>`;
+    rows.forEach(r => t += `<td>${r[i+1]||'—'}</td>`);
+    t += '</tr>';
+  });
+  t += '</tbody></table>';
+  el.innerHTML = t;
+}
+
+function renderAdherencia() {
+  const el = document.getElementById('lista-adherencia');
+  if(!_histData||_histData.length<2){el.innerHTML='<p class="msg">Sin registros aún.</p>';return;}
+  const headers = _histData[0].slice(1);
+  const rows = _histData.slice(1);
+  // Días transcurridos
+  function parseF(f){ const p=(f||'').split(' ')[0].split('/'); return p.length===3?new Date(+p[2],+p[1]-1,+p[0]):new Date(); }
+  const fechas = rows.map(r=>parseF(r[0]));
+  const first = new Date(Math.min(...fechas)); first.setHours(0,0,0,0);
+  const tod = new Date(); tod.setHours(0,0,0,0);
+  const dias = Math.max(1, Math.round((tod-first)/86400000)+1);
+  // Count per supplement
+  let h = '<div>';
+  headers.forEach((nombre, i) => {
+    const count = rows.filter(r=>(r[i+1]||'')=='✅').length;
+    const pct = Math.min(100, Math.round(count/dias*100));
+    const color = pct>=80?'#2D6A4F':pct>=50?'#E67E22':'#C0392B';
+    const slotSup = SUPS.find(s=>s.nombre===nombre);
+    const dot = slotSup ? SLOT_COLORS[slotSup.slot]||'#2D6A4F' : '#2D6A4F';
+    h += `<div class="adh-item">
+      <div class="adh-dot" style="background:${dot}"></div>
+      <span class="adh-name">${nombre}</span>
+      <div class="adh-bar-wrap"><div class="adh-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      <span class="adh-pct" style="color:${color}">${pct}%</span>
+    </div>`;
+  });
+  h += `<p style="font-size:.72rem;color:#999;margin-top:10px;text-align:right">${rows.length} registro(s) · ${dias} día(s) desde inicio</p>`;
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+// ── Tabs ───────────────────────────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+renderTracker();
+</script>
+</body>
+</html>
