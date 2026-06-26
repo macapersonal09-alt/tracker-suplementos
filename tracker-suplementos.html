@@ -274,7 +274,7 @@ const CATEGORIAS = {
   'Omega 3':                  'vit',
   'Selenio + Vit E':          'vit',
 };
-function catBg(nombre){ return CAT_BG[nombre] || '#fff'; }
+function catBg(nombre){ return CAT_BG[CATEGORIAS[nombre]] || '#fff'; }
 
 function renderHistorial() {
   const el = document.getElementById('tabla-historial');
