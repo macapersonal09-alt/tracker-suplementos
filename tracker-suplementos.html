@@ -118,24 +118,26 @@ const SLOTS = [
 ];
 
 const SUPS = [
-  {id:'levotiroxina',  nombre:'Eutirox 50 mcg',          dosis:'50 mcg',  slot:'ayunas'},
-  {id:'paroxetina',    nombre:'Paroxetina 20 mg',         dosis:'20 mg',   slot:'desayuno'},
-  {id:'modafinilo',    nombre:'Modafinilo 100 mg',        dosis:'100 mg',  slot:'desayuno'},
-  {id:'omega3',        nombre:'Omega 3',                  dosis:'1 cáp',   slot:'desayuno'},
-  {id:'vitd3',         nombre:'Vitamina D3',              dosis:'1 cáp',   slot:'desayuno'},
-  {id:'vitk2',         nombre:'Vitamina K2 MK-7',         dosis:'1 cáp',   slot:'desayuno'},
-  {id:'selenio',       nombre:'Selenio + Vit E',          dosis:'1 cáp',   slot:'desayuno'},
-  {id:'inositol',      nombre:'Myo-Inositol (½ dosis)',   dosis:'2 g',     slot:'desayuno'},
-  {id:'zinc',          nombre:'Picolinato de Zinc',       dosis:'1 cáp',   slot:'comida'},
-  {id:'glutamina',     nombre:'L-Glutamina',              dosis:'5 g',     slot:'comida'},
-  {id:'akkermansia',   nombre:'Akkermansia + Resveratrol',dosis:'1 cáp',   slot:'comida'},
-  {id:'vitc',          nombre:'Vitamina C',               dosis:'1 g',     slot:'comida'},
-  {id:'lifeed',        nombre:'LIFEED (Keratina)',        dosis:'1 cáp',   slot:'comida'},
-  {id:'ferrotemp',     nombre:'Ferrotemp 330 mg',         dosis:'1 cáp',   slot:'comida'},
-  {id:'inositol_n',    nombre:'Myo-Inositol (½ noche)',   dosis:'2 g',     slot:'noche'},
-  {id:'probioticos',   nombre:'Probióticos',              dosis:'1 cáp',   slot:'noche'},
-  {id:'magnesio',      nombre:'Glicinato de Magnesio',   dosis:'2 cáp',   slot:'noche'},
-  {id:'melatonina',    nombre:'Melatonina',               dosis:'1 cáp',   slot:'noche'},
+  {id:'levotiroxina',  nombre:'Eutirox 50 mcg',           dosis:'50 mcg',  slot:'ayunas'},
+  {id:'paroxetina',    nombre:'Paroxetina 20 mg',          dosis:'20 mg',   slot:'desayuno'},
+  {id:'modafinilo',    nombre:'Modafinilo 100 mg',         dosis:'100 mg',  slot:'desayuno'},
+  {id:'omega3',        nombre:'Omega 3',                   dosis:'1 cáp',   slot:'desayuno'},
+  {id:'vitd3',         nombre:'Vitamina D3',               dosis:'1 cáp',   slot:'desayuno'},
+  {id:'vitk2',         nombre:'Vitamina K2 MK-7',          dosis:'1 cáp',   slot:'desayuno'},
+  {id:'selenio',       nombre:'Selenio + Vit E',           dosis:'1 cáp',   slot:'desayuno'},
+  {id:'inositol',      nombre:'Myo-Inositol (½ dosis)',    dosis:'2 g',     slot:'desayuno'},
+  {id:'zinc',          nombre:'Picolinato de Zinc',        dosis:'1 cáp',   slot:'comida'},
+  {id:'glutamina',     nombre:'L-Glutamina',               dosis:'5 g',     slot:'comida'},
+  {id:'akkermansia',   nombre:'Akkermansia + Resveratrol', dosis:'1 cáp',   slot:'comida'},
+  {id:'vitc',          nombre:'Vitamina C',                dosis:'1 g',     slot:'comida'},
+  {id:'ferrotemp',     nombre:'Ferrotemp 330 mg',          dosis:'1 cáp',   slot:'comida'},
+  {id:'lifeed',        nombre:'LIFEED (Keratina)',         dosis:'1 cáp',   slot:'comida'},
+  {id:'inositol_n',    nombre:'Myo-Inositol (½ noche)',    dosis:'2 g',     slot:'noche'},
+  {id:'probioticos',   nombre:'Probióticos',               dosis:'1 cáp',   slot:'noche'},
+  {id:'magnesio',      nombre:'Glicinato de Magnesio',    dosis:'2 cáp',   slot:'noche'},
+  {id:'melatonina',    nombre:'Melatonina',                dosis:'1 cáp',   slot:'noche'},
+  {id:'quetiapinalp',  nombre:'Quetiapina LP 50 mg',       dosis:'1 comp',  slot:'noche'},
+  {id:'quetiapina25',  nombre:'Quetiapina 25 mg',          dosis:'1 comp',  slot:'noche'},
 ];
 
 const SLOT_COLORS = {ayunas:'#7B5EA7',desayuno:'#E67E22',comida:'#2D6A4F',noche:'#2471A3'};
@@ -263,16 +265,20 @@ const CAT_BG = {
   tiroides: '#dbeafe', // azul claro
   psiq:     '#fef9c3', // amarillo claro
   vit:      '#fce7f3', // rosa claro
+  hierro:   '#fee2e2', // rojo claro
 };
 const CATEGORIAS = {
   'Eutirox 50 mcg':           'tiroides',
   'Paroxetina 20 mg':         'psiq',
   'Modafinilo 100 mg':        'psiq',
+  'Quetiapina LP 50 mg':      'psiq',
+  'Quetiapina 25 mg':         'psiq',
   'Vitamina D3':              'vit',
   'Vitamina K2 MK-7':         'vit',
   'Vitamina C':               'vit',
   'Omega 3':                  'vit',
   'Selenio + Vit E':          'vit',
+  'Ferrotemp 330 mg':         'hierro',
 };
 function catBg(nombre){ return CAT_BG[CATEGORIAS[nombre]] || '#fff'; }
 
