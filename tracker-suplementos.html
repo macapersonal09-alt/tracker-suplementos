@@ -213,28 +213,21 @@ async function guardarDia() {
 // ── Historial & Adherencia ─────────────────────────────
 let _histData = null;
 let _histLoaded = false;
-let _jsonpResolve = null;
-let _jsonpReject = null;
 
-// Callback fijo que Apps Script llamará
-function _gasCallback(data) {
-  if(_jsonpResolve){ _jsonpResolve(data); _jsonpResolve=null; _jsonpReject=null; }
-}
+const SHEET_ID = '1pBmU5DLWW_N9CukQOWpfZnz4f8mShZltf39ieyQYi-o';
+const CSV_URL  = 'https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=csv&gid=0';
 
-function fetchSheetData() {
-  return new Promise((resolve, reject) => {
-    _jsonpResolve = resolve;
-    _jsonpReject = reject;
-    const old = document.getElementById('_jsonp_script');
-    if(old) old.remove();
-    const script = document.createElement('script');
-    script.id = '_jsonp_script';
-    script.src = SHEET_URL + '?action=get&callback=_gasCallback';
-    script.onerror = () => { _jsonpResolve=null; _jsonpReject=null; reject(new Error('script-error')); };
-    document.head.appendChild(script);
-    setTimeout(() => {
-      if(_jsonpReject){ _jsonpResolve=null; _jsonpReject=null; reject(new Error('timeout-15s')); }
-    }, 15000);
+function parseCSV(text) {
+  return text.trim().split('\n').map(row => {
+    const cells = []; let cur = ''; let inQ = false;
+    for(let i=0;i<row.length;i++){
+      const c = row[i];
+      if(c==='"'){ inQ=!inQ; continue; }
+      if(c===','&&!inQ){ cells.push(cur); cur=''; continue; }
+      cur+=c;
+    }
+    cells.push(cur);
+    return cells.map(c=>c.trim());
   });
 }
 
@@ -244,27 +237,17 @@ async function cargarHistorial() {
   if(tEl) tEl.innerHTML='<p class="msg">⏳ Cargando…</p>';
   if(aEl) aEl.innerHTML='<p class="msg">⏳ Cargando…</p>';
   _histLoaded = false;
-
-  // Intento 1: fetch sin credenciales (evita bloqueo CORS por cookies de Google)
   try {
-    const r = await fetch(SHEET_URL + '?action=get', {redirect:'follow', credentials:'omit'});
+    const r = await fetch(CSV_URL, {credentials:'omit'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
     const text = await r.text();
-    const data = JSON.parse(text);
-    if(Array.isArray(data)){
-      _histData = data; _histLoaded = true;
-      renderHistorial(); renderAdherencia(); return;
-    }
-  } catch(e1){ console.log('fetch falló, intentando JSONP:', e1.message); }
-
-  // Intento 2: JSONP con callback fijo
-  try {
-    const data = await fetchSheetData();
+    const data = parseCSV(text);
+    if(!data.length) throw new Error('sin datos');
     _histData = data; _histLoaded = true;
     renderHistorial(); renderAdherencia();
-  } catch(e2) {
-    const msg = '❌ Error: '+e2.message;
-    if(tEl) tEl.innerHTML='<p class="msg">'+msg+'</p>';
-    if(aEl) aEl.innerHTML='<p class="msg">'+msg+'</p>';
+  } catch(e) {
+    if(tEl) tEl.innerHTML='<p class="msg">❌ '+e.message+'</p>';
+    if(aEl) aEl.innerHTML='<p class="msg">❌ '+e.message+'</p>';
   }
 }
 
