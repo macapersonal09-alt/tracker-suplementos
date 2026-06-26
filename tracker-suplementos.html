@@ -58,6 +58,14 @@
   .adh-pct{font-size:.82rem;font-weight:700;width:36px;text-align:right;}
   .btn-actualizar{padding:6px 14px;background:var(--verde-claro);border:none;border-radius:20px;color:var(--verde);font-size:.78rem;font-weight:600;cursor:pointer;margin-bottom:10px;}
   .msg{padding:16px;text-align:center;color:#888;font-size:.85rem;}
+  /* Tabla historial con columna fija */
+  .reg-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .reg-wrap table{border-collapse:collapse;table-layout:fixed;}
+  .reg-wrap th,.reg-wrap td{border-bottom:1px solid #e8f0eb;}
+  .reg-wrap td.nombre-col,.reg-wrap th.nombre-col{
+    position:sticky;left:0;z-index:2;min-width:130px;max-width:130px;
+  }
+  .reg-wrap th.nombre-col{z-index:3;background:var(--verde);}
 </style>
 </head>
 <body>
@@ -251,10 +259,27 @@ async function cargarHistorial() {
   }
 }
 
+const CAT_BG = {
+  tiroides: '#dbeafe', // azul claro
+  psiq:     '#fef9c3', // amarillo claro
+  vit:      '#fce7f3', // rosa claro
+};
+const CATEGORIAS = {
+  'Eutirox 50 mcg':           'tiroides',
+  'Paroxetina 20 mg':         'psiq',
+  'Modafinilo 100 mg':        'psiq',
+  'Vitamina D3':              'vit',
+  'Vitamina K2 MK-7':         'vit',
+  'Vitamina C':               'vit',
+  'Omega 3':                  'vit',
+  'Selenio + Vit E':          'vit',
+};
+function catBg(nombre){ return CAT_BG[nombre] || '#fff'; }
+
 function renderHistorial() {
   const el = document.getElementById('tabla-historial');
   if(!_histData||_histData.length<2){el.innerHTML='<p class="msg">Sin registros aún.</p>';return;}
-  const headers = _histData[0]; // ['Fecha', sup1, sup2, ...]
+  const headers = _histData[0];
   const rows = _histData.slice(1).reverse();
   let t = '<table><thead><tr><th class="nombre-col">Suplemento</th>';
   rows.forEach(r => {
@@ -268,13 +293,14 @@ function renderHistorial() {
   });
   t += '</tr></thead><tbody>';
   headers.slice(1).forEach((nombre, i) => {
-    t += `<tr><td class="nombre-col">${nombre}</td>`;
+    const bg = catBg(nombre);
+    t += `<tr style="background:${bg}"><td class="nombre-col" style="background:${bg}">${nombre}</td>`;
     rows.forEach(r => {
       const val = r[i+1]||'';
       const tomado = val.includes('✅');
       t += tomado
-        ? `<td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#74c69d"></span></td>`
-        : `<td style="color:#ccc;font-size:.7rem">·</td>`;
+        ? `<td style="background:${bg}"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#74c69d"></span></td>`
+        : `<td style="background:${bg};color:#ccc;font-size:.7rem">·</td>`;
     });
     t += '</tr>';
   });
