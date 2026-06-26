@@ -191,7 +191,7 @@ async function guardarDia() {
   const url = `${SHEET_URL}?action=save&fecha=${encodeURIComponent(fecha)}&vals=${vals}&nombres=${nombres}`;
   btn.textContent='⏳ Guardando…'; btn.disabled=true;
   try {
-    const r = await fetch(url, {redirect:'follow'});
+    const r = await fetch(url, {redirect:'follow', credentials:'omit'});
     const data = await r.json();
     if(data.status==='ok'){
       btn.textContent='✅ Guardado'; msg.textContent='Registrado: '+fecha;
@@ -245,9 +245,9 @@ async function cargarHistorial() {
   if(aEl) aEl.innerHTML='<p class="msg">⏳ Cargando…</p>';
   _histLoaded = false;
 
-  // Intento 1: fetch directo (funciona si Apps Script permite CORS)
+  // Intento 1: fetch sin credenciales (evita bloqueo CORS por cookies de Google)
   try {
-    const r = await fetch(SHEET_URL + '?action=get', {redirect:'follow'});
+    const r = await fetch(SHEET_URL + '?action=get', {redirect:'follow', credentials:'omit'});
     const text = await r.text();
     const data = JSON.parse(text);
     if(Array.isArray(data)){
