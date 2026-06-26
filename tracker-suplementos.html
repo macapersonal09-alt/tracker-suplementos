@@ -259,12 +259,23 @@ function renderHistorial() {
   let t = '<table><thead><tr><th class="nombre-col">Suplemento</th>';
   rows.forEach(r => {
     const parts = (r[0]||'').split(' ');
-    t += `<th><span style="display:block;font-size:.6rem">${parts[0]||''}</span><span style="display:block;font-size:.56rem;opacity:.75">${parts[1]||''}</span></th>`;
+    const dp = (parts[0]||'').split('/');
+    const fechaCorta = dp.length===3 ? dp[0]+'/'+dp[1] : (parts[0]||'');
+    t += `<th style="min-width:28px;max-width:36px;padding:4px 2px;vertical-align:bottom">
+      <span style="display:block;font-size:.58rem;line-height:1.2">${fechaCorta}</span>
+      <span style="display:block;font-size:.52rem;opacity:.7">${parts[1]||''}</span>
+    </th>`;
   });
   t += '</tr></thead><tbody>';
   headers.slice(1).forEach((nombre, i) => {
     t += `<tr><td class="nombre-col">${nombre}</td>`;
-    rows.forEach(r => t += `<td>${r[i+1]||'—'}</td>`);
+    rows.forEach(r => {
+      const val = r[i+1]||'';
+      const tomado = val.includes('✅');
+      t += tomado
+        ? `<td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2D6A4F"></span></td>`
+        : `<td style="color:#ccc;font-size:.7rem">·</td>`;
+    });
     t += '</tr>';
   });
   t += '</tbody></table>';
