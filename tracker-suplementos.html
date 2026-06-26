@@ -231,6 +231,25 @@ function parseCSV(text) {
   });
 }
 
+// Agrupa filas por fecha — si hay duplicados, ✅ gana
+function groupByDate(data) {
+  if(data.length < 2) return data;
+  const headers = data[0];
+  const rows = data.slice(1);
+  const map = {};
+  const order = [];
+  rows.forEach(row => {
+    const key = row[0];
+    if(!map[key]){ map[key] = row.slice(); order.push(key); }
+    else {
+      for(let i=1;i<row.length;i++){
+        if(row[i]==='✅') map[key][i]='✅';
+      }
+    }
+  });
+  return [headers].concat(order.map(k => map[k]));
+}
+
 async function cargarHistorial() {
   const tEl = document.getElementById('tabla-historial');
   const aEl = document.getElementById('lista-adherencia');
@@ -243,7 +262,7 @@ async function cargarHistorial() {
     const text = await r.text();
     const data = parseCSV(text);
     if(!data.length) throw new Error('sin datos');
-    _histData = data; _histLoaded = true;
+    _histData = groupByDate(data); _histLoaded = true;
     renderHistorial(); renderAdherencia();
   } catch(e) {
     if(tEl) tEl.innerHTML='<p class="msg">❌ '+e.message+'</p>';
