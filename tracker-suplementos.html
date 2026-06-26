@@ -194,8 +194,7 @@ function resetDia() {
 async function guardarDia() {
   const btn = document.getElementById('btn-guardar');
   const msg = document.getElementById('save-msg');
-  const fecha = hoy.toLocaleDateString('es-MX',{year:'numeric',month:'2-digit',day:'2-digit'})
-              + ' ' + hoy.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  const fecha = hoy.toLocaleDateString('es-MX',{year:'numeric',month:'2-digit',day:'2-digit'});
   const vals = SUPS.map(s => state[s.id]?'1':'0').join(',');
   const nombres = encodeURIComponent(SUPS.map(s=>s.nombre).join('|'));
   const url = `${SHEET_URL}?action=save&fecha=${encodeURIComponent(fecha)}&vals=${vals}&nombres=${nombres}`;
@@ -289,10 +288,8 @@ function renderHistorial() {
   const rows = _histData.slice(1).reverse();
   let t = '<table><thead><tr><th class="nombre-col">Suplemento</th>';
   rows.forEach(r => {
-    const parts = (r[0]||'').split(' ');
-    const dp = (parts[0]||'').split('/');
-    const fechaCorta = dp.length===3 ? dp[0]+'/'+dp[1] : (parts[0]||'');
-    const label = fechaCorta + (parts[1] ? ' '+parts[1] : '');
+    const dp = (r[0]||'').split('/');
+    const label = dp.length>=2 ? dp[0]+'/'+dp[1] : (r[0]||'');
     t += `<th style="width:22px;min-width:22px;padding:4px 0;vertical-align:bottom">
       <div style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:.58rem;white-space:nowrap;padding:4px 0">${label}</div>
     </th>`;
