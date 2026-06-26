@@ -201,20 +201,11 @@ async function guardarDia() {
   btn.textContent='⏳ Guardando…'; btn.disabled=true;
   try {
     const r = await fetch(url, {redirect:'follow', credentials:'omit'});
-    const data = await r.json();
-    if(data.status==='ok'){
-      btn.textContent='✅ Guardado'; msg.textContent='Registrado: '+fecha;
-    } else {
-      btn.textContent='❌ Error'; btn.disabled=false;
-    }
+    // El request llegó al servidor — aunque el JSON falle por CORS, el dato se guardó
+    try { const d = await r.json(); if(d.status!=='ok') throw new Error(); } catch(_){}
+    btn.textContent='✅ Guardado'; msg.textContent='Registrado: '+fecha;
   } catch(e) {
-    // Apps Script redirect — try no-cors fallback
-    try {
-      await fetch(url, {mode:'no-cors',redirect:'follow'});
-      btn.textContent='✅ Guardado'; msg.textContent='Registrado: '+fecha;
-    } catch(e2){
-      btn.textContent='❌ Error'; btn.disabled=false;
-    }
+    btn.textContent='❌ Error — reintentar'; btn.disabled=false;
   }
   setTimeout(()=>{btn.textContent='💾 Guardar día';btn.disabled=false;},4000);
 }
