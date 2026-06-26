@@ -261,9 +261,9 @@ function renderHistorial() {
     const parts = (r[0]||'').split(' ');
     const dp = (parts[0]||'').split('/');
     const fechaCorta = dp.length===3 ? dp[0]+'/'+dp[1] : (parts[0]||'');
-    t += `<th style="min-width:28px;max-width:36px;padding:4px 2px;vertical-align:bottom">
-      <span style="display:block;font-size:.58rem;line-height:1.2">${fechaCorta}</span>
-      <span style="display:block;font-size:.52rem;opacity:.7">${parts[1]||''}</span>
+    const label = fechaCorta + (parts[1] ? ' '+parts[1] : '');
+    t += `<th style="width:22px;min-width:22px;padding:4px 0;vertical-align:bottom">
+      <div style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:.58rem;white-space:nowrap;padding:4px 0">${label}</div>
     </th>`;
   });
   t += '</tr></thead><tbody>';
