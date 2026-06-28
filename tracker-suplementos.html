@@ -58,6 +58,19 @@
   .adh-pct{font-size:.82rem;font-weight:700;width:36px;text-align:right;}
   .btn-actualizar{padding:6px 14px;background:var(--verde-claro);border:none;border-radius:20px;color:var(--verde);font-size:.78rem;font-weight:600;cursor:pointer;margin-bottom:10px;}
   .msg{padding:16px;text-align:center;color:#888;font-size:.85rem;}
+  /* Config */
+  .cfg-item{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #f0f7f4;}
+  .cfg-item:last-child{border-bottom:none;}
+  .cfg-nombre{flex:1;font-size:.85rem;font-weight:600;}
+  .cfg-dosis{font-size:.75rem;color:#888;display:block;}
+  .cfg-select{font-size:.78rem;padding:4px 6px;border:1px solid #cde8d8;border-radius:8px;color:var(--verde);background:#fff;cursor:pointer;}
+  .cfg-del{background:none;border:none;font-size:1.1rem;cursor:pointer;color:#ccc;padding:4px;}
+  .cfg-del:active{color:#e74c3c;}
+  .cfg-add{background:#fff;border-radius:12px;padding:14px;margin-top:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);}
+  .cfg-add h3{font-size:.88rem;margin-bottom:10px;color:var(--verde);}
+  .cfg-add input,.cfg-add select{width:100%;padding:9px 10px;margin-bottom:8px;border:1px solid #cde8d8;border-radius:8px;font-size:.85rem;}
+  .btn-cfg-save{width:100%;padding:11px;background:var(--verde);color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:4px;}
+  .cfg-saved{text-align:center;font-size:.8rem;color:var(--verde);font-weight:600;min-height:18px;margin-top:6px;}
   /* Tabla historial con columna fija */
   .reg-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .reg-wrap table{border-collapse:collapse;table-layout:fixed;}
@@ -78,10 +91,11 @@
 
 <main>
   <!-- Tabs -->
-  <div class="tabs">
+  <div class="tabs" style="flex-wrap:wrap;">
     <button class="tab active" onclick="switchTab('tracker',this)">🗓️ Hoy</button>
     <button class="tab" onclick="switchTab('historial',this);cargarHistorial()">📅 Historial</button>
     <button class="tab" onclick="switchTab('adherencia',this);cargarHistorial()">📊 Adherencia</button>
+    <button class="tab" onclick="switchTab('config',this);renderConfig()">⚙️ Config</button>
   </div>
 
   <!-- TRACKER -->
@@ -104,6 +118,24 @@
   <div class="panel" id="panel-adherencia">
     <button class="btn-actualizar" onclick="cargarHistorial()">↻ Actualizar</button>
     <div id="lista-adherencia"><p class="msg">Cargando…</p></div>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="panel" id="panel-config">
+    <div id="cfg-lista"></div>
+    <div class="cfg-add">
+      <h3>➕ Agregar suplemento</h3>
+      <input id="cfg-new-nombre" type="text" placeholder="Nombre">
+      <input id="cfg-new-dosis" type="text" placeholder="Dosis (ej: 1 cáp)">
+      <select id="cfg-new-slot">
+        <option value="ayunas">🌅 Al despertar</option>
+        <option value="desayuno">☀️ Desayuno</option>
+        <option value="comida">🌞 Comida</option>
+        <option value="noche">🌙 Noche</option>
+      </select>
+      <button class="btn-cfg-save" onclick="agregarSuplemento()">Agregar</button>
+    </div>
+    <div class="cfg-saved" id="cfg-saved"></div>
   </div>
 </main>
 
@@ -141,8 +173,83 @@ const SUPS = [
 ];
 
 const SLOT_COLORS = {ayunas:'#7B5EA7',desayuno:'#E67E22',comida:'#2D6A4F',noche:'#2471A3'};
+const SLOT_LABELS = {ayunas:'🌅 Al despertar',desayuno:'☀️ Desayuno',comida:'🌞 Comida',noche:'🌙 Noche'};
+
+// Carga SUPS desde localStorage si existe, si no usa los defaults
+const SUPS_DEFAULT = SUPS.slice();
+(function(){
+  const saved = localStorage.getItem('sups_config');
+  if(saved){ try{ const s=JSON.parse(saved); SUPS.length=0; s.forEach(x=>SUPS.push(x)); }catch(_){} }
+})();
+
 const state = {};
 SUPS.forEach(s => state[s.id] = false);
+
+function saveSups(){
+  localStorage.setItem('sups_config', JSON.stringify(SUPS));
+  // Inicializar state para nuevos suplementos
+  SUPS.forEach(s=>{ if(state[s.id]===undefined) state[s.id]=false; });
+}
+
+// ── Config ─────────────────────────────────────────────
+function renderConfig(){
+  const el = document.getElementById('cfg-lista');
+  // Ordenar por slot
+  const ordered = [...SUPS].sort((a,b)=>
+    ['ayunas','desayuno','comida','noche'].indexOf(a.slot) -
+    ['ayunas','desayuno','comida','noche'].indexOf(b.slot)
+  );
+  let h = '';
+  let lastSlot = '';
+  ordered.forEach(s => {
+    if(s.slot !== lastSlot){
+      lastSlot = s.slot;
+      h += `<div style="font-size:.72rem;font-weight:700;color:#888;padding:10px 0 4px;text-transform:uppercase;letter-spacing:.05em">${SLOT_LABELS[s.slot]||s.slot}</div>`;
+    }
+    h += `<div class="cfg-item">
+      <div style="flex:1">
+        <span class="cfg-nombre">${s.nombre}</span>
+        <span class="cfg-dosis">${s.dosis}</span>
+      </div>
+      <select class="cfg-select" onchange="cambiarSlot('${s.id}',this.value)">
+        ${['ayunas','desayuno','comida','noche'].map(sl=>
+          `<option value="${sl}"${sl===s.slot?' selected':''}>${SLOT_LABELS[sl]}</option>`
+        ).join('')}
+      </select>
+      <button class="cfg-del" onclick="eliminarSup('${s.id}')" title="Eliminar">✕</button>
+    </div>`;
+  });
+  el.innerHTML = h;
+}
+
+function cambiarSlot(id, nuevoSlot){
+  const s = SUPS.find(x=>x.id===id);
+  if(s){ s.slot=nuevoSlot; saveSups(); renderConfig(); renderTracker(); mostrarCfgMsg('Guardado ✓'); }
+}
+
+function eliminarSup(id){
+  const i = SUPS.findIndex(x=>x.id===id);
+  if(i>=0){ SUPS.splice(i,1); saveSups(); renderConfig(); renderTracker(); mostrarCfgMsg('Eliminado ✓'); }
+}
+
+function agregarSuplemento(){
+  const nombre = document.getElementById('cfg-new-nombre').value.trim();
+  const dosis  = document.getElementById('cfg-new-dosis').value.trim();
+  const slot   = document.getElementById('cfg-new-slot').value;
+  if(!nombre){ alert('Escribe el nombre'); return; }
+  const id = 'sup_'+Date.now();
+  SUPS.push({id, nombre, dosis: dosis||'—', slot});
+  state[id] = false;
+  saveSups();
+  document.getElementById('cfg-new-nombre').value='';
+  document.getElementById('cfg-new-dosis').value='';
+  renderConfig(); renderTracker(); mostrarCfgMsg('Agregado ✓');
+}
+
+function mostrarCfgMsg(txt){
+  const el=document.getElementById('cfg-saved');
+  el.textContent=txt; setTimeout(()=>el.textContent='',2000);
+}
 
 // ── Fecha ──────────────────────────────────────────────
 const hoy = new Date();
