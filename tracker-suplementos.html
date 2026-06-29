@@ -157,7 +157,7 @@ const SLOTS = [
 // Cargar SLOTS desde localStorage
 (function(){
   const saved = localStorage.getItem('slots_config');
-  if(saved){ try{ const s=JSON.parse(saved); s.forEach((x,i)=>{ if(SLOTS[i]){ SLOTS[i].label=x.label; SLOTS[i].time=x.time; } }); }catch(_){} }
+  if(saved){ try{ const s=JSON.parse(saved); SLOTS.length=0; s.forEach(x=>SLOTS.push(x)); }catch(_){} }
 })();
 
 const SUPS = [
