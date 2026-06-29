@@ -148,6 +148,11 @@ const SLOTS = [
   {id:'comida',   label:'Comida',       icon:'🌞', time:'13:00–14:00'},
   {id:'noche',    label:'Noche',        icon:'🌙', time:'21:00–22:00'},
 ];
+// Cargar SLOTS desde localStorage
+(function(){
+  const saved = localStorage.getItem('slots_config');
+  if(saved){ try{ const s=JSON.parse(saved); s.forEach((x,i)=>{ if(SLOTS[i]){ SLOTS[i].label=x.label; SLOTS[i].time=x.time; } }); }catch(_){} }
+})();
 
 const SUPS = [
   {id:'levotiroxina',  nombre:'Eutirox 50 mcg',           dosis:'50 mcg',  slot:'ayunas'},
@@ -173,7 +178,8 @@ const SUPS = [
 ];
 
 const SLOT_COLORS = {ayunas:'#7B5EA7',desayuno:'#E67E22',comida:'#2D6A4F',noche:'#2471A3'};
-const SLOT_LABELS = {ayunas:'🌅 Al despertar',desayuno:'☀️ Desayuno',comida:'🌞 Comida',noche:'🌙 Noche'};
+function getSlotLabels(){ const m={}; SLOTS.forEach(s=>m[s.id]=s.icon+' '+s.label); return m; }
+function SLOT_LABELS_obj(){ return getSlotLabels(); }
 
 // Carga SUPS desde localStorage si existe, si no usa los defaults
 const SUPS_DEFAULT = SUPS.slice();
@@ -194,17 +200,29 @@ function saveSups(){
 // ── Config ─────────────────────────────────────────────
 function renderConfig(){
   const el = document.getElementById('cfg-lista');
-  // Ordenar por slot
-  const ordered = [...SUPS].sort((a,b)=>
-    ['ayunas','desayuno','comida','noche'].indexOf(a.slot) -
-    ['ayunas','desayuno','comida','noche'].indexOf(b.slot)
-  );
-  let h = '';
+  const SL = getSlotLabels();
+
+  // Sección: editar bloques de horario
+  let h = `<div style="font-size:.72rem;font-weight:700;color:#888;padding:6px 0 6px;text-transform:uppercase;letter-spacing:.05em">Bloques de horario</div>`;
+  SLOTS.forEach(sl => {
+    h += `<div class="cfg-item" style="gap:6px">
+      <span style="font-size:1.1rem">${sl.icon}</span>
+      <input value="${sl.label}" style="flex:1;font-size:.82rem;padding:5px 7px;border:1px solid #cde8d8;border-radius:8px"
+        onchange="editarSlot('${sl.id}','label',this.value)">
+      <input value="${sl.time}" style="width:100px;font-size:.78rem;padding:5px 6px;border:1px solid #cde8d8;border-radius:8px"
+        placeholder="HH:MM–HH:MM" onchange="editarSlot('${sl.id}','time',this.value)">
+    </div>`;
+  });
+
+  // Sección: suplementos
+  h += `<div style="font-size:.72rem;font-weight:700;color:#888;padding:14px 0 6px;text-transform:uppercase;letter-spacing:.05em">Suplementos</div>`;
+  const slotOrder = SLOTS.map(s=>s.id);
+  const ordered = [...SUPS].sort((a,b)=>slotOrder.indexOf(a.slot)-slotOrder.indexOf(b.slot));
   let lastSlot = '';
   ordered.forEach(s => {
     if(s.slot !== lastSlot){
       lastSlot = s.slot;
-      h += `<div style="font-size:.72rem;font-weight:700;color:#888;padding:10px 0 4px;text-transform:uppercase;letter-spacing:.05em">${SLOT_LABELS[s.slot]||s.slot}</div>`;
+      h += `<div style="font-size:.72rem;color:#aaa;padding:8px 0 2px">${SL[s.slot]||s.slot}</div>`;
     }
     h += `<div class="cfg-item">
       <div style="flex:1">
@@ -212,14 +230,21 @@ function renderConfig(){
         <span class="cfg-dosis">${s.dosis}</span>
       </div>
       <select class="cfg-select" onchange="cambiarSlot('${s.id}',this.value)">
-        ${['ayunas','desayuno','comida','noche'].map(sl=>
-          `<option value="${sl}"${sl===s.slot?' selected':''}>${SLOT_LABELS[sl]}</option>`
-        ).join('')}
+        ${SLOTS.map(sl=>`<option value="${sl.id}"${sl.id===s.slot?' selected':''}>${sl.icon} ${sl.label}</option>`).join('')}
       </select>
       <button class="cfg-del" onclick="eliminarSup('${s.id}')" title="Eliminar">✕</button>
     </div>`;
   });
+
+  // Actualizar picker del formulario de agregar
   el.innerHTML = h;
+  const picker = document.getElementById('cfg-new-slot');
+  if(picker) picker.innerHTML = SLOTS.map(sl=>`<option value="${sl.id}">${sl.icon} ${sl.label}</option>`).join('');
+}
+
+function editarSlot(id, campo, valor){
+  const sl = SLOTS.find(s=>s.id===id);
+  if(sl){ sl[campo]=valor; localStorage.setItem('slots_config',JSON.stringify(SLOTS)); renderTracker(); mostrarCfgMsg('Guardado ✓'); }
 }
 
 function cambiarSlot(id, nuevoSlot){
