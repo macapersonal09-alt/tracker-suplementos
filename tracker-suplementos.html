@@ -219,7 +219,9 @@ function renderConfig(){
         onchange="editarSlot('${sl.id}','label',this.value)">
       <input value="${sl.time||''}" style="width:90px;font-size:.78rem;padding:5px 6px;border:1px solid #cde8d8;border-radius:8px"
         placeholder="HH:MM–HH:MM" onchange="editarSlot('${sl.id}','time',this.value)">
-      <button class="cfg-del" onclick="eliminarSlot('${sl.id}')" title="Eliminar bloque">✕</button>
+      <button class="cfg-del" onclick="moverSlot('${sl.id}',-1)" title="Subir">↑</button>
+      <button class="cfg-del" onclick="moverSlot('${sl.id}',1)"  title="Bajar">↓</button>
+      <button class="cfg-del" onclick="eliminarSlot('${sl.id}')" title="Eliminar">✕</button>
     </div>`;
   });
 
@@ -268,6 +270,15 @@ function agregarSlot(){
   document.getElementById('cfg-sl-label').value='';
   document.getElementById('cfg-sl-time').value='';
   renderConfig(); renderTracker(); mostrarCfgMsg('Bloque agregado ✓');
+}
+
+function moverSlot(id, dir){
+  const i = SLOTS.findIndex(s=>s.id===id);
+  const j = i + dir;
+  if(j<0||j>=SLOTS.length) return;
+  [SLOTS[i],SLOTS[j]] = [SLOTS[j],SLOTS[i]];
+  localStorage.setItem('slots_config',JSON.stringify(SLOTS));
+  renderConfig(); renderTracker(); mostrarCfgMsg('Orden actualizado ✓');
 }
 
 function eliminarSlot(id){
