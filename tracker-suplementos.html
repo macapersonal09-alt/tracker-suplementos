@@ -123,16 +123,22 @@
   <!-- CONFIG -->
   <div class="panel" id="panel-config">
     <div id="cfg-lista"></div>
+
     <div class="cfg-add">
+      <h3>🕐 Agregar bloque de horario</h3>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+        <input id="cfg-sl-icon" type="text" placeholder="🌞" style="width:52px;text-align:center">
+        <input id="cfg-sl-label" type="text" placeholder="Nombre del bloque" style="flex:1">
+      </div>
+      <input id="cfg-sl-time" type="text" placeholder="HH:MM–HH:MM">
+      <button class="btn-cfg-save" onclick="agregarSlot()">Agregar bloque</button>
+    </div>
+
+    <div class="cfg-add" style="margin-top:10px">
       <h3>➕ Agregar suplemento</h3>
       <input id="cfg-new-nombre" type="text" placeholder="Nombre">
       <input id="cfg-new-dosis" type="text" placeholder="Dosis (ej: 1 cáp)">
-      <select id="cfg-new-slot">
-        <option value="ayunas">🌅 Al despertar</option>
-        <option value="desayuno">☀️ Desayuno</option>
-        <option value="comida">🌞 Comida</option>
-        <option value="noche">🌙 Noche</option>
-      </select>
+      <select id="cfg-new-slot"></select>
       <button class="btn-cfg-save" onclick="agregarSuplemento()">Agregar</button>
     </div>
     <div class="cfg-saved" id="cfg-saved"></div>
@@ -178,6 +184,8 @@ const SUPS = [
 ];
 
 const SLOT_COLORS = {ayunas:'#7B5EA7',desayuno:'#E67E22',comida:'#2D6A4F',noche:'#2471A3'};
+const SLOT_PALETTE = ['#C0392B','#8E44AD','#1A5276','#117A65','#784212','#1E8BC3','#6C3483','#2E4057'];
+function slotColor(id){ return SLOT_COLORS[id] || SLOT_PALETTE[Math.abs(id.split('').reduce((a,c)=>a+c.charCodeAt(0),0))%SLOT_PALETTE.length]; }
 function getSlotLabels(){ const m={}; SLOTS.forEach(s=>m[s.id]=s.icon+' '+s.label); return m; }
 function SLOT_LABELS_obj(){ return getSlotLabels(); }
 
@@ -209,8 +217,9 @@ function renderConfig(){
       <span style="font-size:1.1rem">${sl.icon}</span>
       <input value="${sl.label}" style="flex:1;font-size:.82rem;padding:5px 7px;border:1px solid #cde8d8;border-radius:8px"
         onchange="editarSlot('${sl.id}','label',this.value)">
-      <input value="${sl.time}" style="width:100px;font-size:.78rem;padding:5px 6px;border:1px solid #cde8d8;border-radius:8px"
+      <input value="${sl.time||''}" style="width:90px;font-size:.78rem;padding:5px 6px;border:1px solid #cde8d8;border-radius:8px"
         placeholder="HH:MM–HH:MM" onchange="editarSlot('${sl.id}','time',this.value)">
+      <button class="cfg-del" onclick="eliminarSlot('${sl.id}')" title="Eliminar bloque">✕</button>
     </div>`;
   });
 
@@ -245,6 +254,27 @@ function renderConfig(){
 function editarSlot(id, campo, valor){
   const sl = SLOTS.find(s=>s.id===id);
   if(sl){ sl[campo]=valor; localStorage.setItem('slots_config',JSON.stringify(SLOTS)); renderTracker(); mostrarCfgMsg('Guardado ✓'); }
+}
+
+function agregarSlot(){
+  const icon  = document.getElementById('cfg-sl-icon').value.trim() || '⏰';
+  const label = document.getElementById('cfg-sl-label').value.trim();
+  const time  = document.getElementById('cfg-sl-time').value.trim();
+  if(!label){ alert('Escribe el nombre del bloque'); return; }
+  const id = 'slot_'+Date.now();
+  SLOTS.push({id, label, icon, time: time||''});
+  localStorage.setItem('slots_config', JSON.stringify(SLOTS));
+  document.getElementById('cfg-sl-icon').value='';
+  document.getElementById('cfg-sl-label').value='';
+  document.getElementById('cfg-sl-time').value='';
+  renderConfig(); renderTracker(); mostrarCfgMsg('Bloque agregado ✓');
+}
+
+function eliminarSlot(id){
+  const enUso = SUPS.some(s=>s.slot===id);
+  if(enUso){ alert('Hay suplementos asignados a este bloque. Cámbiales el horario antes de eliminarlo.'); return; }
+  const i = SLOTS.findIndex(s=>s.id===id);
+  if(i>=0){ SLOTS.splice(i,1); localStorage.setItem('slots_config',JSON.stringify(SLOTS)); renderConfig(); renderTracker(); mostrarCfgMsg('Bloque eliminado ✓'); }
 }
 
 function cambiarSlot(id, nuevoSlot){
@@ -289,8 +319,9 @@ function renderTracker() {
     const items = SUPS.filter(s => s.slot === slot.id);
     const done = items.filter(s => state[s.id]).length;
     const pct = items.length ? Math.round(done/items.length*100) : 0;
+    const color = slotColor(slot.id);
     html += `<div class="slot">
-      <div class="slot-hdr ${slot.id}">${slot.icon} ${slot.label}<span class="slot-time">${slot.time}</span></div>
+      <div class="slot-hdr" style="background:${color}">${slot.icon} ${slot.label}<span class="slot-time">${slot.time}</span></div>
       <div class="barra-wrap">
         <div class="barra"><div class="barra-fill" style="width:${pct}%"></div></div>
         <span class="barra-txt">${done}/${items.length}</span>
